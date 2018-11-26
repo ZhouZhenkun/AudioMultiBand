@@ -160,19 +160,19 @@ codebook =  0:2^nCode;
 [~,quants1] = quantiz(binComp1,partition,codebook);
 binData1= de2bi(quants1,nCode+1);
 
-nCode =13;
+nCode =11;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants2] = quantiz(binComp2,partition,codebook);
 binData2= de2bi(quants2,nCode+1);
 
-nCode =11;
+nCode =9;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants3] = quantiz(binComp3,partition,codebook);
 binData3= de2bi(quants3,nCode+1);
 
-nCode =7;
+nCode =5;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants4] = quantiz(binComp4,partition,codebook);
@@ -228,6 +228,6 @@ sn2 = filter(genFilter2,1,newSd2);
 sn3 = filter(genFilter3,1,newSd3);
 sn4 = filter(genFilter4,1,newSd4);
 
-newRealSignal = sn1 + sn2 + sn3 + sn4;
+newRealSignal = (sn1 + sn2 + sn3 + sn4)*numBands;
 
-
+audiowrite('outTest.wav',newRealSignal,Fs);
