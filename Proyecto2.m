@@ -127,9 +127,6 @@ c2 = compand(sd2,Mu,max(sd2),'mu/compressor');
 c3 = compand(sd3,Mu,max(sd3),'mu/compressor');
 c4 = compand(sd4,Mu,max(sd4),'mu/compressor');
 
-
-
-
 binComp1 = typecast(c1, 'uint16');
 binComp2 = typecast(c2, 'uint16');
 binComp3 = typecast(c3, 'uint16');
@@ -142,42 +139,28 @@ codebook =  0:2^nCode;
 [~,quants1] = quantiz(binComp1,partition,codebook);
 binData1= dec2bin(quants1,nCode);
 
-nCode =10;
+nCode =13;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants2] = quantiz(binComp2,partition,codebook);
 binData2= dec2bin(quants2,nCode);
 
-nCode =8;
+nCode =11;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants3] = quantiz(binComp3,partition,codebook);
 binData3= dec2bin(quants3,nCode);
 
-nCode =3;
+nCode =7;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants4] = quantiz(binComp4,partition,codebook);
 binData4= dec2bin(quants4,nCode);
 
-% newsig = compand(quants1,Mu,max(quants1),'mu/expander');
-% 
-% newsig2 = reshape(newsig, [length(newsig),1]);
-% distor2 = sum((newsig2-sd1).^2)/length(sd1);
-% 
-% figure();
-% subplot(2,1,1)
-% plot(sd1)
-% legend('Original Data')
-% title('Comparacion')
-% subplot(2,1,2)
-% plot(c1)
-% legend('Companded')
-
 %%
 outBin = [binData1, binData2, binData3, binData4];
 fileID = fopen(outFileName,'w');
-fwrite(fileID,outBin, 'ubit40');
+fwrite(fileID,outBin, 'ubit50');
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
