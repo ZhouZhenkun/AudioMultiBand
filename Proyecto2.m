@@ -236,3 +236,36 @@ sn4 = filter(genFilter4,1,newSd4);
 newRealSignal = (sn1 + sn2 + sn3 + sn4)*numBands;
 
 audiowrite('outTest.wav',newRealSignal,Fs);
+
+%% PESQ - Analysis
+
+% name of executable file for PESQ calculation
+binary = 'pesq2.exe';
+% specify path to folder with reference and degraded audio files in it
+pathaudio = '.';
+% specify reference and degraded audio files
+reference = inputFileName;
+degraded = 'outTest.wav';
+
+% compute NB-PESQ and WB-PESQ scores for wav-files
+nb = pesq2_mtlb( reference, degraded, 8000, 'nb', binary, pathaudio );
+
+% display results to screen
+fprintf('====================\n'); 
+disp('Compute NarrowBand-PESQ scores for wav-files:');
+disp('(Top score = 4.5)');
+
+MOS_percent = nb(1)*100/4.5;
+MOS_LQO_percent = nb(2)*100/4.5;
+
+% Mean Opinion Score
+fprintf( 'NB PESQ MOS = %5.3f (%5.3f%%) \n', nb(1), MOS_percent);
+% Mean Opinion Score - Liscening Quality Objective
+fprintf( 'NB MOS LQO  = %5.3f (%5.3f%%) \n', nb(2), MOS_LQO_percent);
+
+
+
+
+
+
+
