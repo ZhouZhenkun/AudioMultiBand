@@ -218,10 +218,15 @@ newData4 = bi2de(binData4);
 newC4C = cast(newData4, 'uint16');
 newC4 = typecast(newC4C, 'double');
 
-newSd1 = upsample(newC1, numBands);
-newSd2 = upsample(newC2, numBands);
-newSd3 = upsample(newC3, numBands);
-newSd4 = upsample(newC4, numBands);
+uc1 = compand(newC1,Mu,max(newC1),'mu/expander');
+uc2 = compand(newC2,Mu,max(newC2),'mu/expander');
+uc3 = compand(newC3,Mu,max(newC3),'mu/expander');
+uc4 = compand(newC4,Mu,max(newC4),'mu/expander');
+
+newSd1 = upsample(uc1, numBands);
+newSd2 = upsample(uc2, numBands);
+newSd3 = upsample(uc3, numBands);
+newSd4 = upsample(uc4, numBands);
 
 sn1 = filter(genFilter1,1,newSd1);
 sn2 = filter(genFilter2,1,newSd2);
