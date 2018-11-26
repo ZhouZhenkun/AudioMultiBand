@@ -74,11 +74,32 @@ stem(fx,sFilters)
 legend('Filter1','Filter2','Filter3','Filter4')
 
 
+% Diezmado x4
 sd1 = downsample(s1,numBands);
-sd2 = downsample(s2,numBands);
+sd2Mirror = downsample(s2,numBands);
 sd3 = downsample(s3,numBands);
-sd4 = downsample(s4,numBands);
+sd4Mirror = downsample(s4,numBands);
 
+% Apply reflection to s2 and s4 (odd) to invert their spectrum
+% sd2
+for (i = 1:length(sd2Mirror))
+  if (mod(i,2) == 0)
+    sd2(i) = sd2Mirror(i);
+  else 
+    sd2(i) = -sd2Mirror(i);
+  end
+end
+sd2 = transpose(sd2);
+
+% sd4
+for (i = 1:length(sd4Mirror))
+  if (mod(i,2) == 0)
+    sd4(i) = sd4Mirror(i);
+  else 
+    sd4(i) = -sd4Mirror(i);
+  end
+end
+sd4 = transpose(sd4);
 
 fd = (1:length(sd1)).*(Fs/numBands);
 fdn = (1:length(s1))/(Fs/numBands);
@@ -137,30 +158,33 @@ nCode =15;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants1] = quantiz(binComp1,partition,codebook);
-binData1= dec2bin(quants1,nCode);
+binData1= de2bi(quants1,nCode+1);
 
 nCode =13;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants2] = quantiz(binComp2,partition,codebook);
-binData2= dec2bin(quants2,nCode);
+binData2= de2bi(quants2,nCode+1);
 
 nCode =11;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants3] = quantiz(binComp3,partition,codebook);
-binData3= dec2bin(quants3,nCode);
+binData3= de2bi(quants3,nCode+1);
 
 nCode =7;
 partition = 0:2^nCode-1;
 codebook =  0:2^nCode;
 [~,quants4] = quantiz(binComp4,partition,codebook);
-binData4= dec2bin(quants4,nCode);
+binData4= de2bi(quants4,nCode+1);
 
 %%
 outBin = [binData1, binData2, binData3, binData4];
 fileID = fopen(outFileName,'w');
-fwrite(fileID,outBin, 'ubit50');
+fwrite(fileID,binData1);
+% fwrite(fileID,binData2, 'ubit14');
+% fwrite(fileID,binData3, 'ubit12');
+% fwrite(fileID,binData4, 'ubit8');
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
@@ -169,3 +193,41 @@ fComp = inFileStatus.bytes/outFileStatus.bytes;
 disp(inFileStatus.bytes)
 disp(outFileStatus.bytes)
 disp(fComp)
+
+
+%% 
+fileID = fopen(outFileName,'r');
+dataIn = fread(fileID,outFileStatus.bytes,'uint16');
+fclose(fileID);
+
+%%
+
+newData1 = bi2de(binData1);
+newC1C = cast(newData1, 'uint16');
+newC1 = typecast(newC1C, 'double');
+
+newData2 = bi2de(binData2);
+newC2C = cast(newData2, 'uint16');
+newC2 = typecast(newC2C, 'double');
+
+newData3 = bi2de(binData3);
+newC3C = cast(newData3, 'uint16');
+newC3 = typecast(newC3C, 'double');
+
+newData4 = bi2de(binData4);
+newC4C = cast(newData4, 'uint16');
+newC4 = typecast(newC4C, 'double');
+
+newSd1 = upsample(newC1, numBands);
+newSd2 = upsample(newC2, numBands);
+newSd3 = upsample(newC3, numBands);
+newSd4 = upsample(newC4, numBands);
+
+sn1 = filter(genFilter1,1,newSd1);
+sn2 = filter(genFilter2,1,newSd2);
+sn3 = filter(genFilter3,1,newSd3);
+sn4 = filter(genFilter4,1,newSd4);
+
+newRealSignal = sn1 + sn2 + sn3 + sn4;
+
+
