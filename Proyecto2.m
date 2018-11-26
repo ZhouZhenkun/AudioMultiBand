@@ -2,7 +2,7 @@ close all;
 clear all;
 clc;
 %% Initial Parameters
-inputFileName = 'test.wav';
+inputFileName = 'test2.wav';
 outFileName = 'audio.bin';
 [inSignal, Fs] = audioread(inputFileName);
 %[inSignal, Fs] = audioread('AudioDePrueba.wav');
@@ -81,11 +81,11 @@ sd4 = downsample(s4,numBands);
 
 
 fd = (1:length(sd1)).*(Fs/numBands);
-td = (1:length(sd1))/(Fs/numBands);
+fdn = (1:length(s1))/(Fs/numBands);
 
 figure();
 subplot(2,1,1)
-stem(td,sd1)
+stem(fdn,abs(fft(s1)))
 legend('Original Data')
 title('Separacion Bandas Downsample')
 subplot(2,1,2)
@@ -94,7 +94,7 @@ legend('Filter1')
 
 figure();
 subplot(2,1,1)
-stem(td,sd2)
+stem(fdn,abs(fft(s2)))
 legend('Original Data')
 title('Separacion Bandas Downsample')
 subplot(2,1,2)
@@ -103,7 +103,7 @@ legend('Filter2')
 
 figure();
 subplot(2,1,1)
-stem(td,sd3)
+stem(fdn,abs(fft(s3)))
 legend('Original Data')
 title('Separacion Bandas Downsample')
 subplot(2,1,2)
@@ -112,7 +112,7 @@ legend('Filter3')
 
 figure();
 subplot(2,1,1)
-stem(td,sd4)
+stem(fdn,abs(fft(s4)))
 legend('Original Data')
 title('Separacion Bandas Downsample')
 subplot(2,1,2)
@@ -123,19 +123,42 @@ legend('Filter4')
 
 Mu = 255;
 c1 = compand(sd1,Mu,max(sd1),'mu/compressor');
-c2 = compand(sd1,Mu,max(sd2),'mu/compressor');
-c3 = compand(sd1,Mu,max(sd3),'mu/compressor');
-c4 = compand(sd1,Mu,max(sd4),'mu/compressor');
+c2 = compand(sd2,Mu,max(sd2),'mu/compressor');
+c3 = compand(sd3,Mu,max(sd3),'mu/compressor');
+c4 = compand(sd4,Mu,max(sd4),'mu/compressor');
 
 
-partition = 0:2^6-1;
-codebook = 0:2^6;
+
+
+binComp1 = typecast(c1, 'uint16');
+binComp2 = typecast(c2, 'uint16');
+binComp3 = typecast(c3, 'uint16');
+binComp4 = typecast(c4, 'uint16');
+
 %[~,~,distor] = quantiz(sd1,partition,codebook);
-[~,quants1] = quantiz(c1,partition,codebook);
-[~,quants2] = quantiz(c2,partition,codebook);
-[~,quants3] = quantiz(c3,partition,codebook);
-[~,quants4] = quantiz(c4,partition,codebook);
+nCode =15;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants1] = quantiz(binComp1,partition,codebook);
+binData1= dec2bin(quants1,nCode);
 
+nCode =10;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants2] = quantiz(binComp2,partition,codebook);
+binData2= dec2bin(quants2,nCode);
+
+nCode =8;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants3] = quantiz(binComp3,partition,codebook);
+binData3= dec2bin(quants3,nCode);
+
+nCode =3;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants4] = quantiz(binComp4,partition,codebook);
+binData4= dec2bin(quants4,nCode);
 
 % newsig = compand(quants1,Mu,max(quants1),'mu/expander');
 % 
@@ -152,11 +175,14 @@ codebook = 0:2^6;
 % legend('Companded')
 
 %%
-outBin = [quants1, quants2, quants3, quants4];
+outBin = [binData1, binData2, binData3, binData4];
 fileID = fopen(outFileName,'w');
-fwrite(fileID,outBin);
+fwrite(fileID,outBin, 'ubit40');
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
 outFileStatus = dir(outFileName);
-fComp = inFileStatus.bytes./outFileStatus.bytes;
+fComp = inFileStatus.bytes/outFileStatus.bytes;
+disp(inFileStatus.bytes)
+disp(outFileStatus.bytes)
+disp(fComp)
