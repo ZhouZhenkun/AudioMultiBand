@@ -2,7 +2,7 @@ close all;
 clear all;
 clc;
 %% Initial Parameters
-inputFileName = 'test2.wav';
+inputFileName = 'test.wav';
 outFileName = 'audio.bin';
 [inSignal, Fs] = audioread(inputFileName);
 %[inSignal, Fs] = audioread('AudioDePrueba.wav');
