@@ -76,30 +76,13 @@ s4 = filter(genFilter4,1,inSignal);
 
 % Diezmado x4
 sd1 = downsample(s1,numBands);
-sd2Mirror = downsample(s2,numBands);
+sd2 = downsample(s2,numBands);
 sd3 = downsample(s3,numBands);
-sd4Mirror = downsample(s4,numBands);
+sd4 = downsample(s4,numBands);
 
 % Apply reflection to s2 and s4 (odd) to invert their spectrum
 % sd2
-for (i = 1:length(sd2Mirror))
-  if (mod(i,2) == 0)
-    sd2(i) = sd2Mirror(i);
-  else 
-    sd2(i) = -sd2Mirror(i);
-  end
-end
-sd2 = transpose(sd2);
 
-% sd4
-for (i = 1:length(sd4Mirror))
-  if (mod(i,2) == 0)
-    sd4(i) = sd4Mirror(i);
-  else 
-    sd4(i) = -sd4Mirror(i);
-  end
-end
-sd4 = transpose(sd4);
 % 
 % fd = (1:length(sd1)).*(Fs/numBands);
 % fdn = (1:length(s1))/(Fs/numBands);
@@ -148,19 +131,25 @@ c2 = compand(sd2,Mu,max(sd2),'mu/compressor');
 c3 = compand(sd3,Mu,max(sd3),'mu/compressor');
 c4 = compand(sd4,Mu,max(sd4),'mu/compressor');
 
-nCode1 =15;
+% Change this for scenarios
+nCode1 =10;
+nCode2 =6;
+nCode3 =4;
+nCode4 =4;
+
+cCode1 = strcat('ubit',int2str(nCode1));
 [partition,codebook] = lloyds(c1,2^nCode1);
 [~,quants1] = quantiz(c1,partition,codebook);
 
-nCode2 =15;
+cCode2 = strcat('ubit',int2str(nCode2));
 [partition,codebook] = lloyds(c2,2^nCode2);
 [~,quants2] = quantiz(c2,partition,codebook);
 
-nCode3 =15;
+cCode3 = strcat('ubit',int2str(nCode3));
 [partition,codebook] = lloyds(c3,2^nCode3);
 [~,quants3] = quantiz(c3,partition,codebook);
 
-nCode4 =15;
+cCode4 = strcat('ubit',int2str(nCode4));
 [partition,codebook] = lloyds(c4,2^nCode4);
 [~,quants4] = quantiz(c4,partition,codebook);
 
@@ -171,30 +160,24 @@ nq2 = typecast(quants2,'uint64');
 nq3 = typecast(quants3,'uint64');
 nq4 = typecast(quants4,'uint64');
 
-shift1 = 64 - nCode1 -1;
-shift2 = 64 - nCode2 -1;
-shift3 = 64 - nCode3 -1;
-shift4 = 64 - nCode4 -1;
+shift1 = 64 - nCode1;
+shift2 = 64 - nCode2;
+shift3 = 64 - nCode3;
+shift4 = 64 - nCode4;
 
 nq1s = bitshift(nq1,-shift1);
 nq2s = bitshift(nq2,-shift2);
 nq3s = bitshift(nq3,-shift3);
 nq4s = bitshift(nq4,-shift4);
-% 
-% nnq1s = bitshift(nq1s,shift1);
-% quants1n = typecast(nnq1s,'double');
-%%
 
-% shiftQ1 = bitshift(nq1,-16);
-% sshiftQ1 =  bitshift(shiftQ1,16);
-% nnq2 = typecast(sshiftQ1,'double');
+%%
 
 outBin = nq1s + nq2s + nq3s + nq4s;
 fileID = fopen(outFileName,'w');
-fwrite(fileID,nq1s, 'uint16');
-fwrite(fileID,nq2s, 'uint16');
-fwrite(fileID,nq3s, 'uint16');
-fwrite(fileID,nq4s, 'uint16');
+fwrite(fileID,nq1s, cCode1);
+fwrite(fileID,nq2s, cCode2);
+fwrite(fileID,nq3s, cCode3);
+fwrite(fileID,nq4s, cCode4);
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
@@ -207,15 +190,20 @@ disp(fComp)
 
 %% 
 fileID = fopen(outFileName,'r');
-dataIn = fread(fileID,'uint16');
+dataIn1 = fread(fileID,length(nq1s),cCode1);
+dataIn2 = fread(fileID,length(nq2s),cCode2);
+dataIn3 = fread(fileID,length(nq3s),cCode3);
+dataIn4 = fread(fileID,length(nq4s),cCode4);
 fclose(fileID);
 
-dataInR = cast(dataIn, 'uint64');
-bandSize = length(dataInR)/4;
-nquants1n = bitshift(dataInR(1:bandSize),shift1);
-nquants2n = bitshift(dataInR(bandSize+1:2*bandSize),shift2);
-nquants3n = bitshift(dataInR(2*bandSize+1:3*bandSize),shift3);
-nquants4n = bitshift(dataInR(3*bandSize+1:end),shift4);
+dataInR1 = cast(dataIn1, 'uint64');
+dataInR2 = cast(dataIn2, 'uint64');
+dataInR3 = cast(dataIn3, 'uint64');
+dataInR4 = cast(dataIn4, 'uint64');
+nquants1n = bitshift(dataInR1,shift1);
+nquants2n = bitshift(dataInR2,shift2);
+nquants3n = bitshift(dataInR3,shift3);
+nquants4n = bitshift(dataInR4,shift4);
 quants1n = typecast(nquants1n, 'double');
 quants2n = typecast(nquants2n, 'double');
 quants3n = typecast(nquants3n, 'double');
