@@ -1,0 +1,2 @@
+REFERENCE	 DEGRADED	 PESQMOS	 MOSLQO	 SAMPLE_FREQ	 MODE
+.\test.wav	 .\outTest.wav	 3.298	 3.265	 8000	nb
