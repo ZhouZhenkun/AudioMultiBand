@@ -4,7 +4,7 @@ clc;
 %% Initial Parameters
 inputFileName = 'test.wav';
 outFileName = 'audio.bin';
-[inSignal, Fs] = audioread(inputFileName);
+[inSignal, Fs] = audioread(inputFileName, 'native');
 %[inSignal, Fs] = audioread('AudioDePrueba.wav');
 
 numBands = 4;
@@ -100,7 +100,7 @@ for (i = 1:length(sd4Mirror))
   end
 end
 sd4 = transpose(sd4);
-% 
+
 % fd = (1:length(sd1)).*(Fs/numBands);
 % fdn = (1:length(s1))/(Fs/numBands);
 % 
@@ -148,53 +148,54 @@ c2 = compand(sd2,Mu,max(sd2),'mu/compressor');
 c3 = compand(sd3,Mu,max(sd3),'mu/compressor');
 c4 = compand(sd4,Mu,max(sd4),'mu/compressor');
 
-nCode1 =15;
-[partition,codebook] = lloyds(c1,2^nCode1);
-[~,quants1] = quantiz(c1,partition,codebook);
+binComp1 = typecast(round(c1), 'uint16');
+binComp2 = typecast(round(c2), 'uint16');
+binComp3 = typecast(round(c3), 'uint16');
+binComp4 = typecast(round(c4), 'uint16');
 
-nCode2 =15;
-[partition,codebook] = lloyds(c2,2^nCode2);
-[~,quants2] = quantiz(c2,partition,codebook);
+% binComp1 = round(c1);
+% binComp2 = round(c2);
+% binComp3 = round(c3);
+% binComp4 = round(c4);
 
-nCode3 =15;
-[partition,codebook] = lloyds(c3,2^nCode3);
-[~,quants3] = quantiz(c3,partition,codebook);
+%[~,~,distor] = quantiz(sd1,partition,codebook);
+nCode =15;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants1] = quantiz(binComp1,partition,codebook);
+%binData1= de2bi(quants1,nCode+1);
 
-nCode4 =15;
-[partition,codebook] = lloyds(c4,2^nCode4);
-[~,quants4] = quantiz(c4,partition,codebook);
+nCode =9;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants2] = quantiz(binComp2,partition,codebook);
+%binData2= de2bi(quants2,nCode+1);
 
+nCode =7;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants3] = quantiz(binComp3,partition,codebook);
+%binData3= de2bi(quants3,nCode+1);
+
+nCode =5;
+partition = 0:2^nCode-1;
+codebook =  0:2^nCode;
+[~,quants4] = quantiz(binComp4,partition,codebook);
+%binData4= de2bi(quants4,nCode+1);
 
 %%
-nq1 = typecast(quants1,'uint64');
-nq2 = typecast(quants2,'uint64');
-nq3 = typecast(quants3,'uint64');
-nq4 = typecast(quants4,'uint64');
+%outBin = [binData1, binData2, binData3, binData4];
+nq1 = cast(quants1, 'uint16');
+nq2 = cast(quants2, 'uint16');
+nq3 = cast(quants3, 'uint16');
+nq4 = cast(quants4, 'uint16');
 
-shift1 = 64 - nCode1 -1;
-shift2 = 64 - nCode2 -1;
-shift3 = 64 - nCode3 -1;
-shift4 = 64 - nCode4 -1;
-
-nq1s = bitshift(nq1,-shift1);
-nq2s = bitshift(nq2,-shift2);
-nq3s = bitshift(nq3,-shift3);
-nq4s = bitshift(nq4,-shift4);
-% 
-% nnq1s = bitshift(nq1s,shift1);
-% quants1n = typecast(nnq1s,'double');
-%%
-
-% shiftQ1 = bitshift(nq1,-16);
-% sshiftQ1 =  bitshift(shiftQ1,16);
-% nnq2 = typecast(sshiftQ1,'double');
-
-outBin = nq1s + nq2s + nq3s + nq4s;
+outBin = [nq1, nq2, nq3, nq4];
 fileID = fopen(outFileName,'w');
-fwrite(fileID,nq1s, 'uint16');
-fwrite(fileID,nq2s, 'uint16');
-fwrite(fileID,nq3s, 'uint16');
-fwrite(fileID,nq4s, 'uint16');
+fwrite(fileID,outBin);
+% fwrite(fileID,binData2, 'ubit14');
+% fwrite(fileID,binData3, 'ubit12');
+% fwrite(fileID,binData4, 'ubit8');
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
@@ -207,28 +208,26 @@ disp(fComp)
 
 %% 
 fileID = fopen(outFileName,'r');
-dataIn = fread(fileID,'uint16');
+dataIn = fread(fileID,outFileStatus.bytes,'uint16');
 fclose(fileID);
-
-dataInR = cast(dataIn, 'uint64');
-bandSize = length(dataInR)/4;
-nquants1n = bitshift(dataInR(1:bandSize),shift1);
-nquants2n = bitshift(dataInR(bandSize+1:2*bandSize),shift2);
-nquants3n = bitshift(dataInR(2*bandSize+1:3*bandSize),shift3);
-nquants4n = bitshift(dataInR(3*bandSize+1:end),shift4);
-quants1n = typecast(nquants1n, 'double');
-quants2n = typecast(nquants2n, 'double');
-quants3n = typecast(nquants3n, 'double');
-quants4n = typecast(nquants4n, 'double');
-
 
 %%
 
+newData1 = nq1;
+newC1C = typecast(newData1, 'double');
+newC1 = round(newC1C);
 
-newC1 = quants1n;
-newC2 = quants2n;
-newC3 = quants3n;
-newC4 = quants4n;
+newData2 = nq2;
+newC2C = cast(newData2, 'uint16');
+newC2 = typecast(newData2, 'double');
+
+newData3 = nq3;
+newC3C = cast(newData3, 'uint16');
+newC3 = typecast(newData3, 'double');
+
+newData4 = nq4;
+newC4C = cast(newData4, 'uint16');
+newC4 = typecast(newData4, 'double');
 
 uc1 = compand(newC1,Mu,max(newC1),'mu/expander');
 uc2 = compand(newC2,Mu,max(newC2),'mu/expander');
