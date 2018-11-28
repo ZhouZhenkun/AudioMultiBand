@@ -132,10 +132,10 @@ c3 = compand(sd3,Mu,max(sd3),'mu/compressor');
 c4 = compand(sd4,Mu,max(sd4),'mu/compressor');
 
 % Change this for scenarios
-nCode1 =12;
-nCode2 =4;
-nCode3 =3;
-nCode4 =3;
+nCode1 =16;
+nCode2 =1;
+nCode3 =1;
+nCode4 =1;
 
 cCode1 = strcat('ubit',int2str(nCode1));
 [partition,codebook] = lloyds(c1,2^nCode1);
@@ -174,11 +174,10 @@ nq4s = bitshift(nq4,-shift4);
 
 outBin = nq1s + nq2s + nq3s + nq4s;
 fileID = fopen(outFileName,'w');
-fwrite(fileID,length(nq1s), 'uint64');
 fwrite(fileID,nq1s, cCode1);
-fwrite(fileID,nq2s, cCode2);
-fwrite(fileID,nq3s, cCode3);
-fwrite(fileID,nq4s, cCode4);
+%fwrite(fileID,nq2s, cCode2);
+%fwrite(fileID,nq3s, cCode3);
+%fwrite(fileID,nq4s, cCode4);
 fclose(fileID);
 
 inFileStatus = dir(inputFileName);
@@ -191,52 +190,51 @@ disp(fComp)
 
 %% 
 fileID = fopen(outFileName,'r');
-bsize =  fread(fileID,1,'uint64');
-dataIn1 = fread(fileID,bsize,cCode1);
-dataIn2 = fread(fileID,bsize,cCode2);
-dataIn3 = fread(fileID,bsize,cCode3);
-dataIn4 = fread(fileID,bsize,cCode4);
+dataIn1 = fread(fileID,length(nq1s),cCode1);
+% dataIn2 = fread(fileID,length(nq2s),cCode2);
+% dataIn3 = fread(fileID,length(nq3s),cCode3);
+% dataIn4 = fread(fileID,length(nq4s),cCode4);
 fclose(fileID);
 
 dataInR1 = cast(dataIn1, 'uint64');
-dataInR2 = cast(dataIn2, 'uint64');
-dataInR3 = cast(dataIn3, 'uint64');
-dataInR4 = cast(dataIn4, 'uint64');
+% dataInR2 = cast(dataIn2, 'uint64');
+% dataInR3 = cast(dataIn3, 'uint64');
+% dataInR4 = cast(dataIn4, 'uint64');
 nquants1n = bitshift(dataInR1,shift1);
-nquants2n = bitshift(dataInR2,shift2);
-nquants3n = bitshift(dataInR3,shift3);
-nquants4n = bitshift(dataInR4,shift4);
+% nquants2n = bitshift(dataInR2,shift2);
+% nquants3n = bitshift(dataInR3,shift3);
+% nquants4n = bitshift(dataInR4,shift4);
 quants1n = typecast(nquants1n, 'double');
-quants2n = typecast(nquants2n, 'double');
-quants3n = typecast(nquants3n, 'double');
-quants4n = typecast(nquants4n, 'double');
+% quants2n = typecast(nquants2n, 'double');
+% quants3n = typecast(nquants3n, 'double');
+% quants4n = typecast(nquants4n, 'double');
 
 
 %%
 
 
 newC1 = quants1n;
-newC2 = quants2n;
-newC3 = quants3n;
-newC4 = quants4n;
+% newC2 = quants2n;
+% newC3 = quants3n;
+% newC4 = quants4n;
 
 uc1 = compand(newC1,Mu,max(newC1),'mu/expander');
-uc2 = compand(newC2,Mu,max(newC2),'mu/expander');
-uc3 = compand(newC3,Mu,max(newC3),'mu/expander');
-uc4 = compand(newC4,Mu,max(newC4),'mu/expander');
+% uc2 = compand(newC2,Mu,max(newC2),'mu/expander');
+% uc3 = compand(newC3,Mu,max(newC3),'mu/expander');
+% uc4 = compand(newC4,Mu,max(newC4),'mu/expander');
 
 newSd1 = upsample(uc1, numBands);
-newSd2 = upsample(uc2, numBands);
-newSd3 = upsample(uc3, numBands);
-newSd4 = upsample(uc4, numBands);
+% newSd2 = upsample(uc2, numBands);
+% newSd3 = upsample(uc3, numBands);
+% newSd4 = upsample(uc4, numBands);
 
 sn1 = filter(genFilter1,1,newSd1);
-sn2 = filter(genFilter2,1,newSd2);
-sn3 = filter(genFilter3,1,newSd3);
-sn4 = filter(genFilter4,1,newSd4);
+% sn2 = filter(genFilter2,1,newSd2);
+% sn3 = filter(genFilter3,1,newSd3);
+% sn4 = filter(genFilter4,1,newSd4);
 
-newRealSignal = (sn1 + sn2 + sn3 + sn4)*numBands;
-
+%newRealSignal = (sn1 + sn2 + sn3 + sn4)*numBands;
+newRealSignal = (sn1)*numBands;
 audiowrite('outTest.wav',newRealSignal,Fs);
 
 %% PESQ - Analysis
@@ -264,4 +262,3 @@ MOS_LQO_percent = nb(2)*100/4.5;
 fprintf( 'NB PESQ MOS = %5.3f (%5.3f%%) \n', nb(1), MOS_percent);
 % Mean Opinion Score - Liscening Quality Objective
 fprintf( 'NB MOS LQO  = %5.3f (%5.3f%%) \n', nb(2), MOS_LQO_percent);
-
